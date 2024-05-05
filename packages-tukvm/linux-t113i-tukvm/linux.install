@@ -1,0 +1,9 @@
+post_install () {
+  post_upgrade
+}
+
+post_upgrade() {
+  # updating module dependencies
+  echo ">>> Updating module dependencies. Please wait ..."
+  depmod ${KERNEL_VERSION}
+}

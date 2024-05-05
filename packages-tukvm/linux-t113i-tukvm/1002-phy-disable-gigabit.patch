@@ -1,0 +1,35 @@
+From 2c9e850936e59a2e811d06c3bddf06b2d435c7f8 Mon Sep 17 00:00:00 2001
+From: Yichuan Gao <gaoyichuan000@gmail.com>
+Date: Sat, 4 May 2024 22:25:05 +0800
+Subject: [PATCH 2/2] phy: disable gigabyte fix
+
+---
+ drivers/net/phy/phy_device.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/net/phy/phy_device.c b/drivers/net/phy/phy_device.c
+index 8efa2a136faa..dbb6128a671a 100644
+--- a/drivers/net/phy/phy_device.c
++++ b/drivers/net/phy/phy_device.c
+@@ -3318,12 +3318,12 @@ static int phy_probe(struct device *dev)
+ 			       phydev->supported))
+ 		phydev->autoneg = 0;
+ 
+-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
+-			      phydev->supported))
+-		phydev->is_gigabit_capable = 1;
+-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+-			      phydev->supported))
+-		phydev->is_gigabit_capable = 1;
++	// if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
++	// 		      phydev->supported))
++	// 	phydev->is_gigabit_capable = 1;
++	// if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
++	// 		      phydev->supported))
++	// 	phydev->is_gigabit_capable = 1;
+ 
+ 	of_set_phy_supported(phydev);
+ 	phy_advertise_supported(phydev);
+-- 
+2.45.0
+

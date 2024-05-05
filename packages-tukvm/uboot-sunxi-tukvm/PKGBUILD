@@ -1,0 +1,48 @@
+# U-Boot: Sunxi TuKVM
+# Maintainer: Yichuan Gao <i@gycis.me>
+
+_pikvm_use_distcc=1
+
+buildarch=4
+
+pkgname=uboot-sunxi-tukvm
+pkgver=2024.01rc4
+pkgrel=1
+pkgdesc="Mainline U-Boot for Allwinner T113-i in TuKVM project"
+arch=('armv7h')
+url='http://www.denx.de/wiki/U-Boot/WebHome'
+license=('GPL')
+install=uboot-sunxi.install
+makedepends=('git' 'bc' 'python' 'swig' 'python-setuptools' 'python-pyelftools')
+backup=('boot/boot.txt' 'boot/boot.scr')
+_commit=21ac9dcdbf4bf19d89225085d2c4945f26ddb3fc
+source=("u-boot-${_commit}.tar.gz::https://github.com/TuKVM/u-boot/archive/${_commit}.tar.gz"
+        'boot.txt'
+        'mkscr')
+md5sums=('SKIP'
+         '068acedb91d10f145fbded287c0e39d3'
+         '021623a04afd29ac3f368977140cfbfd')
+
+build() {
+  cd u-boot-${_commit}
+
+  make distclean
+  make tukvm_pcie_defconfig
+  echo 'CONFIG_IDENT_STRING=" Arch Linux ARM"' >> .config
+  if [ "$_pikvm_use_distcc" -eq 1 ]; then
+    make EXTRAVERSION=-${pkgrel} CC=distcc CXX=distcc
+  else
+    make EXTRAVERSION=-${pkgrel}
+  fi
+
+  tools/mkimage -A arm -O linux -T script -C none -n "U-Boot boot script" -d ../boot.txt ../boot.scr
+}
+
+package() {
+  install -d "${pkgdir}"/boot
+  install -Dm644 u-boot-${_commit}/u-boot-sunxi-with-spl.bin "${pkgdir}"/boot
+
+  install -Dm644 boot.txt "${pkgdir}"/boot/boot.txt
+  install -Dm644 boot.scr "${pkgdir}"/boot/boot.scr
+  install -Dm755 mkscr "${pkgdir}"/boot/mkscr
+}
