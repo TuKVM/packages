@@ -34,7 +34,6 @@ jobs:
 
       - name: Building packages
         run: |
-          sudo prlimit --pid $$ --nofile=65536:1048576
           make build BOARD=rpi2 NOINT=1 NOSIGN=1
 
       - name: Deploying packages
