@@ -18,13 +18,15 @@ export NOINT ?=
 
 
 # =====
+_BUILDENV_VERSION = v0.0.1
+
 _TARGET_REPO_NAME = tukvm
 _TARGET_REPO_KEY = F1B8656599CCC938
 
 _ALARM_UID := $(shell id -u)
 _ALARM_GID := $(shell id -g)
 
-_BUILDENV_IMAGE = $(PROJECT).$(BOARD).$(_ALARM_UID)-$(_ALARM_GID)
+_BUILDENV_IMAGE = $(PROJECT).$(BOARD).$(_ALARM_UID)-$(_ALARM_GID):$(_BUILDENV_VERSION)
 _BUILDENV_DIR = ./.pi-builder/$(BOARD)
 _BUILD_DIR = ./.build/$(BOARD)
 _BASE_REPOS_DIR = ./repos
@@ -100,6 +102,9 @@ binfmt: $(_BUILDENV_DIR)
 
 buildenv: binfmt
 	$(call say,"Ensuring $(BOARD) buildenv")
+ifneq ($(shell $(DOCKER) image ls -q $(_BUILDENV_IMAGE)),)
+	$(call say,"Buildenv image $(_BUILDENV_IMAGE) already exists")
+else
 	rm -rf $(_BUILDENV_DIR)/stages/arch/buildenv
 	cp -a buildenv $(_BUILDENV_DIR)/stages/arch/buildenv
 	$(MAKE) -C $(_BUILDENV_DIR) os \
@@ -112,6 +117,7 @@ buildenv: binfmt
 			--build-arg ALARM_UID=$(_ALARM_UID) \
 			--build-arg ALARM_GID=$(_ALARM_GID) \
 		"
+endif
 	$(call say,"Buildenv $(BOARD) is ready")
 
 
