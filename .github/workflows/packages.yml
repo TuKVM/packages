@@ -17,9 +17,9 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       TERM: xterm
-      AWS_ACCESS_KEY_ID: ${{secrets.S3_ACCESS_KEY}}
-      AWS_SECRET_ACCESS_KEY: ${{secrets.S3_SECRET_KEY}}
-      AWS_ENDPOINT_URL_S3: ${{secrets.S3_ENDPOINT}}
+      AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+      AWS_ENDPOINT_URL_S3: ${{ secrets.S3_ENDPOINT }}
       AWS_DEFAULT_REGION: us-east-1
     steps:
       - name: Checkout
@@ -27,10 +27,9 @@ jobs:
 
       - name: Fetching current repo
         run: |
-          make download S3_BUCKET=${{secrets.S3_BUCKET}} S3_ENDPOINT=${{secrets.S3_ENDPOINT}}
+          make download S3_BUCKET=${{ secrets.S3_BUCKET }}
 
       - name: Building environment
-        if: contains(${{github.event.head_commit.message}}, '[buildenv]')
         run: make buildenv BOARD=rpi2 NC=1
 
       - name: Building packages
@@ -40,4 +39,4 @@ jobs:
       - name: Deploying packages
         if: github.ref == 'refs/heads/master'
         run: |
-          make upload S3_BUCKET=${{secrets.S3_BUCKET}} S3_ENDPOINT=${{secrets.S3_ENDPOINT}}
+          make upload S3_BUCKET=${{ secrets.S3_BUCKET }}
