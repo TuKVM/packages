@@ -9,9 +9,8 @@ export DOCKER ?= docker
 export DISTCC_HOSTS ?=
 export DISTCC_J ?=
 
+# AK/SK is set by environment variables in actions
 S3_BUCKET ?= tukvm-repo
-S3_ENDPOINT ?=
-export AWS_ENDPOINT_URL_S3 ?= $(S3_ENDPOINT)
 
 export J ?= $(shell nproc)
 export NC ?=
