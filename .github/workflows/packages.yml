@@ -1,43 +1,46 @@
 name: __packages__
 on:
   workflow_call:
-    inputs:
-      BOARD:
-        required: true
-        type: string
     secrets:
-      DEPLOY_KEY:
+      S3_ENDPOINT:
+        required: true
+      S3_BUCKET:
+        required: true
+      S3_ACCESS_KEY:
+        required: true
+      S3_SECRET_KEY:
         required: true
 
 
 jobs:
   packages:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     env:
-      DEPLOY_KEY: "${{secrets.DEPLOY_KEY}}"
-      BOARD: "${{inputs.BOARD}}"
       TERM: xterm
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Configuring SSH
-        run: |
-          test -n "$DEPLOY_KEY"
-          mkdir ~/.ssh
-          chmod 700 ~/.ssh
-          ssh-keyscan -H files.pikvm.org > ~/.ssh/known_hosts
-          echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{secrets.S3_ACCESS_KEY}}
+          aws-secret-access-key: ${{secrets.S3_SECRET_KEY}}
+          aws-region: us-east-1
 
       - name: Fetching current repo
         run: |
-          make download DEPLOY_USER=data
+          make download S3_BUCKET=${{secrets.S3_BUCKET}} S3_ENDPOINT=${{secrets.S3_ENDPOINT}}
 
       - name: Building environment
-        run: make buildenv BOARD=$BOARD NC=1
+        run: make buildenv BOARD=rpi2 NC=1
 
       - name: Building packages
         run: |
           sudo prlimit --pid $$ --nofile=65536:1048576
-          make _build BOARD=$BOARD PKG=kvmd NOINT=1 NOSIGN=1 FORCE=1
+          make build BOARD=rpi2 NOINT=1 NOSIGN=1
+
+      - name: Deploying packages
+        if: github.ref == 'refs/heads/master'
+        run: |
+          make upload S3_BUCKET=${{secrets.S3_BUCKET}} S3_ENDPOINT=${{secrets.S3_ENDPOINT}}

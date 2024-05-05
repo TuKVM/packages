@@ -1,6 +1,6 @@
 -include config.mk
 
-export PROJECT ?= pikvm-packages
+export PROJECT ?= tukvm-packages
 export BOARD ?= rpi2
 export STAGES ?= __init__ buildenv
 export HOSTNAME = buildenv
@@ -8,9 +8,10 @@ export ARCH_DIST_REPO_URL ?= http://mirror.archlinuxarm.org/
 export DOCKER ?= docker
 export DISTCC_HOSTS ?=
 export DISTCC_J ?=
-UPLOAD ?= testing stable
 
-DEPLOY_USER ?= root
+S3_BUCKET ?= tukvm-repo
+S3_ENDPOINT ?=
+export AWS_ENDPOINT_URL_S3 ?= $(S3_ENDPOINT)
 
 export J ?= $(shell nproc)
 export NC ?=
@@ -18,8 +19,8 @@ export NOINT ?=
 
 
 # =====
-_TARGET_REPO_NAME = pikvm
-_TARGET_REPO_KEY = 912C773ABBD1B584
+_TARGET_REPO_NAME = tukvm
+_TARGET_REPO_KEY = F1B8656599CCC938
 
 _ALARM_UID := $(shell id -u)
 _ALARM_GID := $(shell id -g)
@@ -28,7 +29,8 @@ _BUILDENV_IMAGE = $(PROJECT).$(BOARD).$(_ALARM_UID)-$(_ALARM_GID)
 _BUILDENV_DIR = ./.pi-builder/$(BOARD)
 _BUILD_DIR = ./.build/$(BOARD)
 _BASE_REPOS_DIR = ./repos
-_TARGET_REPO_DIR = $(_BASE_REPOS_DIR)/$(BOARD)
+_TARGET_REPO_DIR = $(_BASE_REPOS_DIR)
+_PACKAGES_DIR = ./packages-tukvm
 
 
 # =====
@@ -49,25 +51,21 @@ all:
 	true
 
 
-__upload__testing:
-	rsync -rl --progress --delete $(_BASE_REPOS_DIR)/ $(DEPLOY_USER)@files.pikvm.org:/var/www/files.pikvm.org/repos/arch-testing
-__upload__stable:
-	rsync -rl --progress --delete $(_BASE_REPOS_DIR)/ $(DEPLOY_USER)@files.pikvm.org:/var/www/files.pikvm.org/repos/arch
-upload: $(addprefix __upload__,$(UPLOAD))
+upload:
+	aws s3 sync $(_BASE_REPOS_DIR) s3://$(S3_BUCKET)/arch --delete
 
 
 download:
-	rm -rf $(_BASE_REPOS_DIR)
-	rsync -rl --progress $(DEPLOY_USER)@files.pikvm.org:/var/www/files.pikvm.org/repos/arch/ $(_BASE_REPOS_DIR)
+	aws s3 sync s3://$(S3_BUCKET)/arch $(_BASE_REPOS_DIR) --delete
 
 
-__UPDATABLE := $(addprefix __update__,$(subst /update.mk,,$(subst packages/,,$(wildcard packages/*/update.mk))))
+__UPDATABLE := $(addprefix __update__,$(subst /update.mk,,$(subst $(_PACKAGES_DIR)/,,$(wildcard $(_PACKAGES_DIR)/*/update.mk))))
 update: $(__UPDATABLE)
 $(__UPDATABLE):
-	$(MAKE) -C packages/$(subst __update__,,$@) -f update.mk update
+	$(MAKE) -C $(_PACKAGES_DIR)/$(subst __update__,,$@) -f update.mk update
 
 
-__BUILD_ORDER := $(addprefix __build__,$(shell cat packages/order.$(BOARD)))
+__BUILD_ORDER := $(addprefix __build__,$(shell cat $(_PACKAGES_DIR)/order.$(BOARD)))
 build: buildenv $(__BUILD_ORDER)
 $(__BUILD_ORDER):
 	$(MAKE) _build BOARD=$(BOARD) PKG=$(subst __build__,,$@)
@@ -126,7 +124,7 @@ _run: $(_BUILD_DIR) $(_TARGET_REPO_DIR)
 			--ulimit "nofile=65536:1048576" \
 			--volume $(shell pwd)/$(_TARGET_REPO_DIR):/repo:rw \
 			--volume $(shell pwd)/$(_BUILD_DIR):/build:rw \
-			--volume $(shell pwd)/packages:/packages:ro \
+			--volume $(shell pwd)/$(_PACKAGES_DIR):/packages:ro \
 			--env TARGET_REPO_DIR=/repo \
 			--env BUILD_DIR=/build \
 			--env PACKAGES_DIR=/packages \
@@ -145,16 +143,8 @@ $(_BUILDENV_DIR):
 $(_BUILD_DIR):
 	mkdir -p $(_BUILD_DIR)
 
-
-$(_BASE_REPOS_DIR)/rpi2:
-	mkdir -p $(_BASE_REPOS_DIR)/rpi2
-	ln -sf rpi2 $(_BASE_REPOS_DIR)/zero2w
-	ln -sf rpi2 $(_BASE_REPOS_DIR)/rpi3
-	ln -sf rpi2 $(_BASE_REPOS_DIR)/rpi2-arm
-	ln -sf rpi2 $(_BASE_REPOS_DIR)/rpi3-arm
-	ln -sf rpi2 $(_BASE_REPOS_DIR)/rpi4
-	ln -sf rpi2 $(_BASE_REPOS_DIR)/rpi4-arm
-
+$(_TARGET_REPO_DIR):
+	mkdir -p $(_TARGET_REPO_DIR)
 
 # =====
 .PHONY: buildenv
