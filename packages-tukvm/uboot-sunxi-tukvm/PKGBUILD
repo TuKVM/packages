@@ -7,7 +7,7 @@ buildarch=4
 
 pkgname=uboot-sunxi-tukvm
 pkgver=2024.01rc4
-pkgrel=1
+pkgrel=3
 pkgdesc="Mainline U-Boot for Allwinner T113-i in TuKVM project"
 arch=('armv7h')
 url='http://www.denx.de/wiki/U-Boot/WebHome'
@@ -15,12 +15,12 @@ license=('GPL')
 install=uboot-sunxi.install
 makedepends=('git' 'bc' 'python' 'swig' 'python-setuptools' 'python-pyelftools')
 backup=('boot/boot.txt' 'boot/boot.scr')
-_commit=21ac9dcdbf4bf19d89225085d2c4945f26ddb3fc
+_commit=2b0a622c79253105110dc4629158e9bd48ee7412
 source=("u-boot-${_commit}.tar.gz::https://github.com/TuKVM/u-boot/archive/${_commit}.tar.gz"
         'boot.txt'
         'mkscr')
 md5sums=('SKIP'
-         '068acedb91d10f145fbded287c0e39d3'
+         '173adb4654186b536cadf91c8aa6d0eb'
          '021623a04afd29ac3f368977140cfbfd')
 
 build() {
