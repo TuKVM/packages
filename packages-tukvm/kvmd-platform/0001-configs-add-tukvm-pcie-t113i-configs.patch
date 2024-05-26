@@ -1,0 +1,131 @@
+From 0b62902461df3ddc883c9aab09570392dd6a29e7 Mon Sep 17 00:00:00 2001
+From: Yichuan Gao <gaoyichuan000@gmail.com>
+Date: Sun, 26 May 2024 19:37:24 +0800
+Subject: [PATCH] configs: add tukvm-pcie-t113i configs
+
+Signed-off-by: Yichuan Gao <gaoyichuan000@gmail.com>
+---
+ .../kvmd/main/tukvm-pcie-hdmiusb-t113i.yaml   | 78 +++++++++++++++++++
+ .../os/modules-load/tukvm-pcie-hdmiusb.conf   |  1 +
+ configs/os/sudoers/tukvm-pcie-hdmiusb         |  2 +
+ .../os/udev/tukvm-pcie-hdmiusb-t113i.rules    |  6 ++
+ 4 files changed, 87 insertions(+)
+ create mode 100644 configs/kvmd/main/tukvm-pcie-hdmiusb-t113i.yaml
+ create mode 100644 configs/os/modules-load/tukvm-pcie-hdmiusb.conf
+ create mode 100644 configs/os/sudoers/tukvm-pcie-hdmiusb
+ create mode 100644 configs/os/udev/tukvm-pcie-hdmiusb-t113i.rules
+
+diff --git a/configs/kvmd/main/tukvm-pcie-hdmiusb-t113i.yaml b/configs/kvmd/main/tukvm-pcie-hdmiusb-t113i.yaml
+new file mode 100644
+index 00000000..be1cbfbd
+--- /dev/null
++++ b/configs/kvmd/main/tukvm-pcie-hdmiusb-t113i.yaml
+@@ -0,0 +1,78 @@
++# Don't touch this file otherwise your device may stop working.
++# Use override.yaml to modify required settings.
++# You can find a working configuration in /usr/share/kvmd/configs.default/kvmd.
++
++override: !include [override.d, override.yaml]
++
++logging: !include logging.yaml
++
++kvmd:
++    auth: !include auth.yaml
++
++    hid:
++        type: otg
++
++    atx:
++        type: gpio
++        power_led_pin: 145      # PE17
++        hdd_led_pin: 144        # PE16
++        power_switch_pin: 34    # PB2
++        reset_switch_pin: 44    # PB12
++
++    msd:
++        type: otg
++    
++    gpio:
++        scheme:
++            capture_control:
++                pin: 205    # PG13
++                mode: output
++                switch: true
++                initial: true
++        view:
++            header:
++                title: "Switches"
++            table:
++                - ["#HDMI Capture control"]
++                - []
++                - ["#Enable:", capture_control]
++
++    streamer:
++        quality: 0
++        resolution:
++            default: 1920x1080
++            available:
++                - 1920x1080
++                - 1600x1200
++                - 1360x768
++                - 1280x1024
++                - 1280x960
++                - 1280x720
++                - 1024x768
++                - 800x600
++                - 720x576
++                - 720x480
++                - 640x480
++        cmd:
++            - "/usr/bin/ustreamer"
++            - "--device=/dev/kvmd-video"
++            - "--persistent"
++            - "--format=mjpeg"
++            - "--resolution={resolution}"
++            - "--desired-fps={desired_fps}"
++            - "--drop-same-frames=30"
++            - "--unix={unix}"
++            - "--unix-rm"
++            - "--unix-mode=0660"
++            - "--exit-on-parent-death"
++            - "--process-name-prefix={process_name_prefix}"
++            - "--notify-parent"
++            - "--no-log-colors"
++            - "--jpeg-sink=kvmd::ustreamer::jpeg"
++            - "--jpeg-sink-mode=0660"
++
++
++vnc:
++    memsink:
++        jpeg:
++            sink: "kvmd::ustreamer::jpeg"
+diff --git a/configs/os/modules-load/tukvm-pcie-hdmiusb.conf b/configs/os/modules-load/tukvm-pcie-hdmiusb.conf
+new file mode 100644
+index 00000000..0dcdcf58
+--- /dev/null
++++ b/configs/os/modules-load/tukvm-pcie-hdmiusb.conf
+@@ -0,0 +1 @@
++libcomposite
+diff --git a/configs/os/sudoers/tukvm-pcie-hdmiusb b/configs/os/sudoers/tukvm-pcie-hdmiusb
+new file mode 100644
+index 00000000..673d4033
+--- /dev/null
++++ b/configs/os/sudoers/tukvm-pcie-hdmiusb
+@@ -0,0 +1,2 @@
++kvmd ALL=(ALL) NOPASSWD: /usr/bin/kvmd-helper-otgmsd-remount
++kvmd-pst ALL=(ALL) NOPASSWD: /usr/bin/kvmd-helper-pst-remount
+diff --git a/configs/os/udev/tukvm-pcie-hdmiusb-t113i.rules b/configs/os/udev/tukvm-pcie-hdmiusb-t113i.rules
+new file mode 100644
+index 00000000..65610e3a
+--- /dev/null
++++ b/configs/os/udev/tukvm-pcie-hdmiusb-t113i.rules
+@@ -0,0 +1,6 @@
++# https://unix.stackexchange.com/questions/66901/how-to-bind-usb-device-under-a-static-name
++# https://wiki.archlinux.org/index.php/Udev#Setting_static_device_names
++KERNEL=="video[0-9]*", SUBSYSTEM=="video4linux", ATTRS{idVendor}=="534d", ATTRS{idProduct}=="2109", GROUP="kvmd", SYMLINK+="kvmd-video"
++KERNEL=="hidg0", GROUP="kvmd", SYMLINK+="kvmd-hid-keyboard"
++KERNEL=="hidg1", GROUP="kvmd", SYMLINK+="kvmd-hid-mouse"
++KERNEL=="hidg2", GROUP="kvmd", SYMLINK+="kvmd-hid-mouse-alt"
+-- 
+2.45.1
+

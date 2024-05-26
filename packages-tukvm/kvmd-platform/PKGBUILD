@@ -1,0 +1,83 @@
+# Author: Yichuan Gao <i@gycis.me>
+
+_variants=(
+	tukvm-pcie-hdmiusb:t113i
+)
+
+pkgname=()
+for _variant in "${_variants[@]}"; do
+	_platform=${_variant%:*}
+	_board=${_variant#*:}
+	pkgname+=(kvmd-platform-$_platform-$_board)
+done
+pkgver=4.2
+pkgrel=1
+url="https://github.com/pikvm/kvmd"
+license=(GPL)
+arch=(any)
+source=(
+	"$url/archive/v$pkgver.tar.gz"
+	0001-configs-add-tukvm-pcie-t113i-configs.patch
+)
+md5sums=('SKIP'
+         '554bf304134a0410494f9f720251dc5c')
+
+prepare() {
+	cd "$srcdir/kvmd-$pkgver"
+	echo "Applying patches..."
+	patch -p1 -i ../0001-configs-add-tukvm-pcie-t113i-configs.patch
+}
+
+for _variant in "${_variants[@]}"; do
+	_platform=${_variant%:*}
+	_board=${_variant#*:}
+	_base=${_platform%%-*}
+	_video=${_platform##*-}
+	eval "package_kvmd-platform-$_platform-$_board() {
+		cd \"kvmd-\$pkgver\"
+
+		pkgdesc=\"PiKVM platform configs - $_platform for $_board\"
+		depends=(kvmd=$pkgver-$pkgrel \"linux-$_board-$_base>=6.6.21-3\")
+
+		backup=(
+			etc/sysctl.d/99-kvmd.conf
+			etc/udev/rules.d/99-kvmd.rules
+			etc/kvmd/main.yaml
+		)
+
+		install -DTm644 configs/os/sysctl.conf \"\$pkgdir/etc/sysctl.d/99-kvmd.conf\"
+		install -DTm644 configs/os/udev/common.rules \"\$pkgdir/usr/lib/udev/rules.d/99-kvmd-common.rules\"
+		install -DTm644 configs/os/udev/$_platform-$_board.rules \"\$pkgdir/etc/udev/rules.d/99-kvmd.rules\"
+		install -DTm444 configs/kvmd/main/$_platform-$_board.yaml \"\$pkgdir/etc/kvmd/main.yaml\"
+
+		if [ -f configs/kvmd/fan/$_platform.ini ]; then
+			backup=(\"\${backup[@]}\" etc/kvmd/fan.ini)
+			depends=(\"\${depends[@]}\" \"kvmd-fan>=0.18\")
+			install -DTm444 configs/kvmd/fan/$_platform.ini \"\$pkgdir/etc/kvmd/fan.ini\"
+		fi
+
+		if [ -f configs/os/modules-load/$_platform.conf ]; then
+			backup=(\"\${backup[@]}\" etc/modules-load.d/kvmd.conf)
+			install -DTm644 configs/os/modules-load/$_platform.conf \"\$pkgdir/etc/modules-load.d/kvmd.conf\"
+		fi
+
+		if [ -f configs/os/sudoers/$_platform ]; then
+			backup=(\"\${backup[@]}\" etc/sudoers.d/99_kvmd)
+			install -DTm440 configs/os/sudoers/$_platform \"\$pkgdir/etc/sudoers.d/99_kvmd\"
+			chmod 750 \"\$pkgdir/etc/sudoers.d\"
+		fi
+
+		if [[ $_platform =~ ^.*-hdmi$ ]]; then
+			backup=(\"\${backup[@]}\" etc/kvmd/tc358743-edid.hex)
+			install -DTm444 configs/kvmd/edid/$_base.hex \"\$pkgdir/etc/kvmd/tc358743-edid.hex\"
+		fi
+
+		mkdir -p \"\$pkgdir/usr/share/kvmd\"
+		local _device=\"\$pkgdir/usr/share/kvmd/device\"
+		rm -f \"\$_device\"
+		echo PIKVM_BASE=$_base > \"\$_device\"
+		echo PIKVM_VIDEO=$_video >> \"\$_device\"
+		echo PIKVM_BOARD=$_board >> \"\$_device\"
+		chmod 444 \"\$_device\"
+	}"
+done
