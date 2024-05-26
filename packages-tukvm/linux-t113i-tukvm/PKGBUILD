@@ -30,10 +30,10 @@ source=("https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.ta
         2001-rename-msd.patch
 )
 md5sums=('SKIP'
-         '9a07d36db53131b5a320f58af9f1ed16'
+         'cb88df49c61e82988ec0a11e6f11ed5b'
          '1fa136a0852d7d2755712ae00c9cdf96'
          'f1c8f1c73c0d546b770b8c6c9a79acd0')
-md5sums_armv7h=('8c37b8a745c3e54931c0daca35b2e65f')
+md5sums_armv7h=('2f777f5000390da214cfda069e9e3b45')
 
 # setup vars
 if [[ $CARCH == "armv7h" ]]; then
