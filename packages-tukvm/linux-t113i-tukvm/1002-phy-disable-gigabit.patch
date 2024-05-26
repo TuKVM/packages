@@ -1,4 +1,4 @@
-From 2c9e850936e59a2e811d06c3bddf06b2d435c7f8 Mon Sep 17 00:00:00 2001
+From 5ff501ddd8b50ef00cc7a553b2e634580c6dc835 Mon Sep 17 00:00:00 2001
 From: Yichuan Gao <gaoyichuan000@gmail.com>
 Date: Sat, 4 May 2024 22:25:05 +0800
 Subject: [PATCH 2/2] phy: disable gigabyte fix
@@ -31,5 +31,5 @@ index 8efa2a136faa..dbb6128a671a 100644
  	of_set_phy_supported(phydev);
  	phy_advertise_supported(phydev);
 -- 
-2.45.0
+2.45.1
 

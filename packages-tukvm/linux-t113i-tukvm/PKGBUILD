@@ -11,7 +11,7 @@ _commit=d3d24545684c6b6637603e14443bbd67dae59413
 # _kernelname=${pkgbase#linux}
 _regen=
 pkgver=6.8.9
-pkgrel=2
+pkgrel=3
 pkgdesc='Linux'
 _srcname=linux-${pkgver}
 url="https://github.com/torvalds/linux"
@@ -30,8 +30,8 @@ source=("https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.ta
         2001-rename-msd.patch
 )
 md5sums=('SKIP'
-         'cb88df49c61e82988ec0a11e6f11ed5b'
-         '1fa136a0852d7d2755712ae00c9cdf96'
+         '73461c863fe2232148d2a8640f88bf01'
+         'f18cc2dea863023466f89297921c2aea'
          'f1c8f1c73c0d546b770b8c6c9a79acd0')
 md5sums_armv7h=('2f777f5000390da214cfda069e9e3b45')
 
